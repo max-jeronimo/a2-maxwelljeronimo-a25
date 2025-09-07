@@ -6,6 +6,8 @@ const displayResults = async function () {
     const data = await response.json()
 
     const tbody = document.querySelector("#results-table tbody")
+    if (!tbody) return
+
     tbody.innerHTML = ""
 
     data.forEach((item) => {
@@ -15,7 +17,7 @@ const displayResults = async function () {
     <td>${item.artist}</td>
     <td>${item.year}</td>
     <td>${item.songs}</td>
-    `
+    <td><button class="editButton" data-album="${item.album}">Edit</button></td>    `
       tbody.appendChild(tr)
 
     })
@@ -23,6 +25,45 @@ const displayResults = async function () {
     console.error("Error in getting the results from the server:", err)
   }
 }
+
+document.querySelectorAll(".edit-btn").forEach(button => {
+  button.onclick = async function () {
+    const albumName = this.dataset.album
+    const record = data.find(r => r.album === albumName)
+
+    const newAlbum = prompt("Enter new album name:", record.album)
+    const newArtist = prompt("Enter new artist:", record.artist)
+    const newYear = prompt("Enter new year:", record.year)
+    const newSongs = prompt("Enter new number of songs:", record.songs)
+
+    const updated = {
+      oldAlbum: albumName,
+      album: newAlbum !== null && newAlbum.trim() !== "" ? newAlbum : record.album,
+      artist: newArtist !== null && newArtist.trim() !== "" ? newArtist : record.artist,
+      year: newYear !== null && newYear.trim() !== "" ? parseInt(newYear) : record.year,
+      songs: newSongs !== null && newSongs.trim() !== "" ? parseInt(newSongs) : record.songs
+    }
+
+    if (!newAlbum || !newArtist || !newYear || !newSongs) return
+
+    const json = {
+      oldAlbum: albumName,
+      album: newAlbum,
+      artist: newArtist,
+      year: parseInt(newYear),
+      songs: parseInt(newSongs)
+    }
+
+    const response = await fetch("/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(json)
+    })
+
+    await response.json()
+    displayResults()
+  }
+})
 
 const submit = async function( event ) {
   event.preventDefault()
@@ -40,8 +81,6 @@ const submit = async function( event ) {
     songs: parseInt(songsInput.value)
   }
 
-  const body = JSON.stringify(json)
-
   const response = await fetch("/submit", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
@@ -49,20 +88,26 @@ const submit = async function( event ) {
 
   })
 
-  await response.json()
-  console.log("Updated dataset:", data)
+  const updatedData = await response.json()
+  console.log("Updated data:", updatedData)
+
   displayResults()
 
 
   albumInput.value = ''
   artistInput.value = ''
   yearInput.value = ''
-  songInput.value = ''
+  songsInput.value = ''
 }
 
 
 window.onload = function() {
-  const button = document.querySelector("button");
-  button.onclick = submit;
-  displayResults()
+  const form = document.querySelector("#albumForm");
+  if (form) {
+    form.onsubmit = submit
+  }
+  const resultsTable = document.querySelector("#results-table")
+    if (resultsTable) {
+      displayResults()
+    }
 }

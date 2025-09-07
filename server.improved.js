@@ -17,8 +17,13 @@ const appdata = [
 const server = http.createServer( function( request,response ) {
   if( request.method === "GET" ) {
     handleGet( request, response )    
-  }else if( request.method === "POST" ){
-    handlePost( request, response ) 
+  }else if( request.method === "POST" && request.url === "/submit" ){
+    handlePost( request, response )
+  } else if (request.method === "POST" && request.url === "/update") {
+    handleUpdate(request, response)
+  } else {
+    response.writeHead(404)
+    response.end("404 Error: Not Found")
   }
 })
 
@@ -47,6 +52,27 @@ const handlePost = function( request, response ) {
     appdata.push(newAlbum)
 
     response.writeHead( 200, {"Content-Type": "application/json" })
+    response.end(JSON.stringify(appdata))
+  })
+}
+
+const handleUpdate = function( request, response ) {
+  let dataString = ""
+
+  request.on("data", chunk => dataString += chunk)
+
+  request.on("end", () => {
+    const updatedAlbum = JSON.parse(dataString)
+    const index = appdata.findIndex(a => a.album === updatedAlbum.oldAlbum)
+
+    if (index !== -1) {
+      appdata[index].album = updatedAlbum.album
+      appdata[index].artist = updatedAlbum.artist
+      appdata[index].year = updatedAlbum.year
+      appdata[index].songs = updatedAlbum.songs
+    }
+
+    response.writeHead (200, {"Content-Type": "application/json"})
     response.end(JSON.stringify(appdata))
   })
 }
