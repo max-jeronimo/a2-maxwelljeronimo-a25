@@ -21,6 +21,8 @@ const server = http.createServer( function( request,response ) {
     handlePost( request, response )
   } else if (request.method === "POST" && request.url === "/update") {
     handleUpdate(request, response)
+  } else if (request.method === "POST" && request.url === "/delete") {
+    handleDelete(request, response)
   } else {
     response.writeHead(404)
     response.end("404 Error: Not Found")
@@ -73,6 +75,24 @@ const handleUpdate = function( request, response ) {
     }
 
     response.writeHead (200, {"Content-Type": "application/json"})
+    response.end(JSON.stringify(appdata))
+  })
+}
+
+const handleDelete = function ( request, response ) {
+  let dataString = ""
+
+  request.on("data", chunk => dataString += chunk)
+
+  request.on("end", () => {
+    const { album } = JSON.parse(dataString)
+    const index = appdata.findIndex (a => a.album === album)
+
+    if (index !== -1) {
+      appdata.splice(index, 1)
+    }
+
+    response.writeHead(200, { "Content-Type": "application/json" })
     response.end(JSON.stringify(appdata))
   })
 }
