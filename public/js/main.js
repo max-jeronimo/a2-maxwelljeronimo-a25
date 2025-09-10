@@ -25,6 +25,20 @@ const displayResults = async function () {
       tbody.appendChild(tr)
     })
 
+    function renderHTMLRow(item) {
+      return `
+        <td class="cellAlbum>${escapeHtml(item.album)}</td>
+        <td class="cellArtist>${escapeHtml(item.album)}</td>
+        <td class="cellYear>${escapeHtml(item.album)}</td>
+        <td class="cellSongs>${escapeHtml(item.album)}</td>
+        <td class = "cellActions">
+            button class="editButton" data-album="$(escapeAttr(item.album))">Edit</button>
+            button class="deleteButton" data-album="$(escapeAttr(item.album))">Delete</button>
+        ` </td>
+
+       
+    }
+
     document.querySelectorAll(".editButton").forEach(button => {
       button.onclick = async function () {
         const albumName = this.dataset.album
@@ -39,8 +53,10 @@ const displayResults = async function () {
           oldAlbum: albumName,
           album: newAlbum !== null && newAlbum.trim() !== "" ? newAlbum : record.album,
           artist: newArtist !== null && newArtist.trim() !== "" ? newArtist : record.artist,
-          year: newYear !== null && newYear.trim() !== "" ? parseInt(newYear) : record.year,
-          songs: newSongs !== null && newSongs.trim() !== "" ? parseInt(newSongs) : record.songs
+          year: (newYear !== null && newYear.trim() !== "" && !isNaN(parseInt(newYear)))
+              ? parseInt(newYear) : record.year,
+          songs: (newSongs !== null && newSongs.trim() !== "" && !isNaN(parseInt(newSongs)))
+        ? parseInt(newSongs) : record.songs
         }
 
         const response = await fetch("/update", {
@@ -49,6 +65,21 @@ const displayResults = async function () {
           body: JSON.stringify(updated)
         })
 
+        await response.json()
+        displayResults()
+      }
+    })
+
+    document.querySelectorAll(".deleteButton").forEach(button => {
+      button.onclick = async function () {
+        const albumName = this.dataset.album
+        if (!confirm(`Are you sure you want to delete "${albumName}"?`)) return
+
+        const response = await fetch("/delete", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({album: albumName})
+        })
         await response.json()
         displayResults()
       }
