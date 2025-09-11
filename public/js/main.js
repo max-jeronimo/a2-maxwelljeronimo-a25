@@ -1,5 +1,37 @@
 // FRONT-END (CLIENT) JAVASCRIPT HERE
 
+function renderHTMLRow(item) {
+  return `
+    <td class="cellVinyl">${escapeHtml(item.vinyl)}</td>
+    <td class="cellArtist">${escapeHtml(item.artist)}</td>
+    <td class="cellOwned">${item.owned ? "✅" : "❌"}</td>
+    <td class="cellLink">${item.link ? `<a href="${escapeAttr(item.link)}" target="_blank">Buy</a>` : ""}</td>
+    <td class="cellActions">
+      <button class="editButton" data-slug="${escapeAttr(item.slug)}">Edit</button>
+      <button class="deleteButton" data-slug="${escapeAttr(item.slug)}">Delete</button>
+    </td>
+  `
+}
+
+
+function escapeHtml(s) {
+  return String(s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+}
+
+function escapeAttr(s) {
+  return String(s)
+      .replaceAll('&','&amp;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'","&#39;")
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+}
+
+let currentlyEditing = null
+
 const displayResults = async function () {
   try {
     const response = await fetch("/results")
@@ -9,81 +41,118 @@ const displayResults = async function () {
     if (!tbody) return
 
     tbody.innerHTML = ""
-
-    data.forEach((item) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${item.album}</td>
-        <td>${item.artist}</td>
-        <td>${item.year}</td>
-        <td>${item.songs}</td>
-        <td>
-            <button class="editButton" data-album="${item.album}">Edit</button>
-            <button class="deleteButton" data-album="${item.album}">Delete</button>
-        </td>
-      `
+    data.forEach(item => {
+      const tr = document.createElement("tr")
+      tr.dataset.slug = item.slug
+      tr.innerHTML = renderHTMLRow(item)
+      tr.dataset.original = JSON.stringify(item)
       tbody.appendChild(tr)
     })
 
-    function renderHTMLRow(item) {
-      return `
-        <td class="cellAlbum>${escapeHtml(item.album)}</td>
-        <td class="cellArtist>${escapeHtml(item.album)}</td>
-        <td class="cellYear>${escapeHtml(item.album)}</td>
-        <td class="cellSongs>${escapeHtml(item.album)}</td>
-        <td class = "cellActions">
-            button class="editButton" data-album="$(escapeAttr(item.album))">Edit</button>
-            button class="deleteButton" data-album="$(escapeAttr(item.album))">Delete</button>
-        ` </td>
 
-       
-    }
+    tbody.onclick = async function(e) {
+      const btn = e.target
+      const tr = btn.closest("tr")
+      if (!tr) return
 
-    document.querySelectorAll(".editButton").forEach(button => {
-      button.onclick = async function () {
-        const albumName = this.dataset.album
-        const record = data.find(r => r.album === albumName)
 
-        const newAlbum = prompt("Enter new album name:", record.album)
-        const newArtist = prompt("Enter new artist:", record.artist)
-        const newYear = prompt("Enter new year:", record.year)
-        const newSongs = prompt("Enter new number of songs:", record.songs)
+      if (btn.matches(".editButton")) {
+        if (currentlyEditing && currentlyEditing !== tr) {
+          alert("Finish or cancel the other edit first.")
+          return
+        }
+        currentlyEditing = tr
+
+        const item = JSON.parse(tr.dataset.original)
+        tr.innerHTML = `
+          <td><input class="input-vinyl" value="${escapeAttr(item.vinyl)}"></td>
+          <td><input class="input-artist" value="${escapeAttr(item.artist)}"></td>
+          <td><input class="input-owned" type="checkbox" ${item.owned ? "checked" : ""}></td>
+          <td><input class="input-link" value="${escapeAttr(item.link || "")}" ${item.owned ? "disabled" : ""}></td>
+          <td>
+            <button class="saveButton" data-slug="${escapeAttr(item.slug)}">Save</button>
+            <button class="cancelButton">Cancel</button>
+          </td>
+        `
+        tr.querySelector(".input-vinyl").focus()
+
+        const ownedInput = tr.querySelector(".input-owned")
+        const linkInput = tr.querySelector(".input-link")
+
+        ownedInput.addEventListener("change", () =>{
+          linkInput.disabled = ownedInput.checked
+          if (ownedInput.checked) linkInput.value = ""
+        })
+
+        return
+      }
+
+
+      if (btn.matches(".saveButton")) {
+        const slug = btn.dataset.slug
+        const vinylVal = tr.querySelector(".input-vinyl").value.trim()
+        const artistVal = tr.querySelector(".input-artist").value.trim()
+        const ownedChecked = tr.querySelector(".input-owned").checked
+        const linkVal = tr.querySelector(".input-link").value.trim()
+
+        const original = JSON.parse(tr.dataset.original)
 
         const updated = {
-          oldAlbum: albumName,
-          album: newAlbum !== null && newAlbum.trim() !== "" ? newAlbum : record.album,
-          artist: newArtist !== null && newArtist.trim() !== "" ? newArtist : record.artist,
-          year: (newYear !== null && newYear.trim() !== "" && !isNaN(parseInt(newYear)))
-              ? parseInt(newYear) : record.year,
-          songs: (newSongs !== null && newSongs.trim() !== "" && !isNaN(parseInt(newSongs)))
-        ? parseInt(newSongs) : record.songs
+          slug: slug,
+          vinyl: vinylVal !== "" ? vinylVal : original.vinyl,
+          artist: artistVal !== "" ? artistVal : original.artist,
+          owned: ownedChecked,
+          link: linkVal !== "" ? linkVal : original.link
         }
 
-        const response = await fetch("/update", {
+        await fetch("/update", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updated)
         })
 
-        await response.json()
+        currentlyEditing = null
         displayResults()
+        return
       }
-    })
 
-    document.querySelectorAll(".deleteButton").forEach(button => {
-      button.onclick = async function () {
-        const albumName = this.dataset.album
-        if (!confirm(`Are you sure you want to delete "${albumName}"?`)) return
+      if (btn.matches(".cancelButton")) {
+        const original = JSON.parse(tr.dataset.original)
+        tr.innerHTML = renderHTMLRow(original)
+        tr.dataset.original = JSON.stringify(original)
+        currentlyEditing = null
+        return
+      }
 
-        const response = await fetch("/delete", {
+      if (btn.matches(".deleteButton")) {
+        const slug = btn.dataset.slug
+        const actionCell = tr.querySelector(".cellActions")
+        actionCell.innerHTML = `
+          <span>Delete "${escapeHtml(tr.querySelector(".cellVinyl").textContent)}"?</span>
+          <button class="confirmDelete" data-slug="${escapeAttr(slug)}">Yes</button>
+          <button class="cancelDelete">No</button>
+        `
+        return
+      }
+
+      if (btn.matches(".confirmDelete")) {
+        const slug = btn.dataset.slug
+        await fetch("/delete", {
           method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({album: albumName})
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug })
         })
-        await response.json()
         displayResults()
+        return
       }
-    })
+
+      if (btn.matches(".cancelDelete")) {
+        const original = JSON.parse(tr.dataset.original)
+        tr.innerHTML = renderHTMLRow(original)
+        tr.dataset.original = JSON.stringify(original)
+      }
+    }
+
   } catch (err) {
     console.error("Error in getting the results from the server:", err)
   }
@@ -94,16 +163,16 @@ const submit = async function( event ) {
   event.preventDefault()
 
 
-  const albumInput = document.querySelector("#album")
+  const vinylInput = document.querySelector("#vinyl")
   const artistInput = document.querySelector("#artist")
-  const yearInput = document.querySelector("#year")
-  const songsInput = document.querySelector("#songs")
+  const ownedInput = document.querySelector("#owned")
+  const linkInput = document.querySelector("#link")
 
   const json = {
-    album: albumInput.value,
+    vinyl: vinylInput.value,
     artist: artistInput.value,
-    year: parseInt(yearInput.value),
-    songs: parseInt(songsInput.value)
+    owned: ownedInput.checked,
+    link: ownedInput.checked ? "" : linkInput.value
   }
 
   const response = await fetch("/submit", {
@@ -119,15 +188,15 @@ const submit = async function( event ) {
   displayResults()
 
 
-  albumInput.value = ''
+  vinylInput.value = ''
   artistInput.value = ''
-  yearInput.value = ''
-  songsInput.value = ''
+  ownedInput.checked = false
+  linkInput.value = ''
 }
 
 
 window.onload = function() {
-  const form = document.querySelector("#albumForm");
+  const form = document.querySelector("#vinylForm");
   if (form) {
     form.onsubmit = submit
   }
