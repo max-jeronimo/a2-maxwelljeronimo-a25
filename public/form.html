@@ -3,7 +3,6 @@
 <head>
     <title>CS4241 Assignment 2</title>
     <meta charset="utf-8">
-    <script src="js/main.js"></script>
     <link rel="stylesheet" href="css/main.css">
 
     <!-- get rid of favicon error -->
@@ -11,20 +10,23 @@
 </head>
 <body>
 <h2>Add A New Album</h2>
-<form id= "albumForm">
-    <label for="album">Album Name</label>
-    <input type="text" id ="album" required><br>
+<form id= "vinylForm">
+    <label for="vinyl">Vinyl Name</label>
+    <input type="text" id ="vinyl" required><br>
 
     <label for= "artist">Artist Name</label>
     <input type="text" id="artist" required><br>
 
-    <label for="year">Year Released</label>
-    <input type="text" id="year" required><br>
+    <label for="owned">Owned?</label>
+    <input type="checkbox" id="owned"><br>
 
-    <label for="songs">Number of Songs</label>
-    <input type="text" id="songs" required><br>
+    <div id="link-field">
+        <label for="link">Purchase Link</label>
+        <input type="url" id="link"><br>
+    </div>
 
-    <button type="submit">Add Album</button>
+    <button type="submit">Add Vinyl</button>
 </form>
+<script src="js/main.js"></script>
 </body>
 </html>

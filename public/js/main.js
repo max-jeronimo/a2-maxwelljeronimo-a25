@@ -68,7 +68,12 @@ const displayResults = async function () {
           <td><input class="input-vinyl" value="${escapeAttr(item.vinyl)}"></td>
           <td><input class="input-artist" value="${escapeAttr(item.artist)}"></td>
           <td><input class="input-owned" type="checkbox" ${item.owned ? "checked" : ""}></td>
-          <td><input class="input-link" value="${escapeAttr(item.link || "")}" ${item.owned ? "disabled" : ""}></td>
+          <td>
+            <div class="link-edit-field" style="${item.owned ? "display:none;" : ""}">
+                <input class="input-link" value="${escapeAttr(item.link || "")}">
+            </div>
+           </td>
+
           <td>
             <button class="saveButton" data-slug="${escapeAttr(item.slug)}">Save</button>
             <button class="cancelButton">Cancel</button>
@@ -77,12 +82,18 @@ const displayResults = async function () {
         tr.querySelector(".input-vinyl").focus()
 
         const ownedInput = tr.querySelector(".input-owned")
+        const linkField = tr.querySelector(".link-edit-field")
         const linkInput = tr.querySelector(".input-link")
 
-        ownedInput.addEventListener("change", () =>{
-          linkInput.disabled = ownedInput.checked
-          if (ownedInput.checked) linkInput.value = ""
+        ownedInput.addEventListener("change", () => {
+          if (ownedInput.checked) {
+            linkField.style.display = "none"
+            linkInput.value = ""
+          } else {
+            linkField.style.display = "block"
+          }
         })
+
 
         return
       }
@@ -192,6 +203,22 @@ const submit = async function( event ) {
   artistInput.value = ''
   ownedInput.checked = false
   linkInput.value = ''
+}
+
+
+const ownedCheckbox = document.getElementById("owned");
+const linkField = document.getElementById("link-field");
+const linkInput = document.getElementById("link");
+
+if (ownedCheckbox && linkField && linkInput) {
+  ownedCheckbox.addEventListener("change", () => {
+    if (ownedCheckbox.checked) {
+      linkField.style.display = "none";
+      linkInput.value = "";
+    } else {
+      linkField.style.display = "block";
+    }
+  });
 }
 
 
