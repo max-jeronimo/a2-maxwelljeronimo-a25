@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "vinyl": "Chromakopia",
+    "artist": "Tyler, the Creator",
+    "owned": false,
+    "link": "https://www.ebay.com/itm/317255401531?_skw=tyler+chromakopai+vinyl&itmmeta=01K4V6CMJTGJF73ARW7K2HRT4Y&hash=item49dde5403b:g:RhgAAeSwOElovs3b&itmprp=enc%3AAQAKAAAA0FkggFvd1GGDu0w3yXCmi1ekbSqesTr%2F5e%2B7lzqkFRkGlpDXdkpd4ybeaXdWCGS5bVS5dwh1F1hZUaURNK2iBVmzX5B%2BwR5n2KWUt1NOjiQ6njY6MjdsX%2F7VxZ%2BF1rTXOVEw2bPCuJVxjqpAP6nMAlQk40E7a01rNP2TIWIfznZewSd9UGn91lJB93T04EcIO0yh7x6ivJU8RT69TRmA1CrZRCYCwLPTBQ0XXpEjHATJpVdHDgfB%2BIDjAUMCKJ7u1s2FnX8AlWcmwBXf8zaSxLc%3D%7Ctkp%3ABk9SR8zJsuamZg&pfm=0",
+    "slug": "chromakopia-tyler,-the-creator",
+    "dateAdded": "2025-09-11T03:17:50.133Z"
+  },
+  {
+    "vinyl": "Favorite Worst Nightmare",
+    "artist": "Arctic Monkeys",
+    "owned": true,
+    "link": "",
+    "slug": "favorite-worst-nightmare-arctic-monkeys",
+    "dateAdded": "2025-09-11T03:43:07.777Z"
+  }
+]
